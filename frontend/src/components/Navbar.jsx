@@ -1,120 +1,153 @@
 import React from 'react';
-import { Landmark, Sparkles, ShieldCheck, Laptop, ShoppingBag, Building2, MessageSquare, Target } from 'lucide-react';
-import { translations } from '../translations';
+import { Landmark, ShoppingBag, Building2, Terminal, Target, Clock, Globe } from 'lucide-react';
+import { useSpeech } from '../context/SpeechContext';
 
 export default function Navbar({ language, setLanguage, activeTab, setActiveTab }) {
-  const t = translations[language] || translations.English;
+  const { currentLanguage, setLanguage: setSpeechLanguage, t } = useSpeech();
+
+  const handleLanguageChange = (e) => {
+    const selected = e.target.value;
+    setLanguage(selected);
+    const langCodeMap = {
+      English: 'en-US',
+      Hindi: 'hi-IN',
+      Bengali: 'bn-IN',
+      Telugu: 'te-IN',
+      Marathi: 'mr-IN',
+      Tamil: 'ta-IN',
+      Gujarati: 'gu-IN',
+      Kannada: 'kn-IN',
+      Malayalam: 'ml-IN',
+      Punjabi: 'pa-IN',
+      Odia: 'or-IN',
+      Assamese: 'as-IN',
+      Urdu: 'ur-IN'
+    };
+    if (langCodeMap[selected]) {
+      setSpeechLanguage(langCodeMap[selected]);
+    }
+  };
 
   return (
-    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-sm">
+    <header className="sticky top-0 z-40 bg-white border-b border-slate-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          {/* Logo & MoSJE Branding */}
-          <div className="flex items-center space-x-3 cursor-pointer" onClick={() => setActiveTab('assessment')}>
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-700 via-indigo-600 to-sky-500 flex items-center justify-center text-white shadow-md shadow-blue-500/20">
-              <Landmark className="w-5 h-5" />
+        <div className="flex items-center justify-between h-14">
+          {/* Institutional Header & Logo */}
+          <div
+            className="flex items-center space-x-3 cursor-pointer select-none"
+            onClick={() => setActiveTab('assessment')}
+          >
+            <div className="w-8 h-8 rounded-lg bg-slate-900 flex items-center justify-center text-white">
+              <Landmark className="w-4 h-4" />
             </div>
             <div>
               <div className="flex items-center space-x-2">
-                <span className="font-extrabold text-lg text-slate-900 tracking-tight">SIH26091</span>
-                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-blue-100 text-blue-800 border border-blue-200">
-                  MoSJE Mandate
+                <span className="font-bold text-sm text-slate-900 tracking-tight">
+                  MoSJE Advisory System
+                </span>
+                <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-slate-700 border border-slate-200">
+                  SIH26091
                 </span>
               </div>
-              <p className="text-xs text-slate-500 font-medium hidden sm:block">
-                AI Business Advisory & Concessional Credit Engine
+              <p className="text-[11px] text-slate-500 hidden sm:block">
+                National Rural Enterprise Feasibility & Concessional Credit Appraisal
               </p>
             </div>
           </div>
 
-          {/* Navigation Tabs */}
+          {/* Operational Module Tabs */}
           <nav className="hidden lg:flex items-center space-x-1">
             <button
               onClick={() => setActiveTab('assessment')}
-              className={`px-3 py-2 rounded-lg text-xs font-bold transition-all ${
-                activeTab === 'assessment'
-                  ? 'bg-blue-50 text-blue-700 shadow-sm'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                activeTab === 'assessment' || activeTab === 'dashboard'
+                  ? 'bg-slate-900 text-white'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
               }`}
             >
-              Feasibility & Schemes
+              Appraisal Workstation
             </button>
             <button
               onClick={() => setActiveTab('equipment')}
-              className={`px-3 py-2 rounded-lg text-xs font-bold flex items-center space-x-1 transition-all ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center space-x-1.5 transition-colors ${
                 activeTab === 'equipment'
-                  ? 'bg-blue-50 text-blue-700 shadow-sm'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                  ? 'bg-slate-900 text-white'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
               }`}
             >
-              <ShoppingBag className="w-3.5 h-3.5 text-blue-600" />
-              <span>Machinery (GeM)</span>
+              <ShoppingBag className="w-3.5 h-3.5" />
+              <span>GeM Machinery</span>
             </button>
             <button
               onClick={() => setActiveTab('sca')}
-              className={`px-3 py-2 rounded-lg text-xs font-bold flex items-center space-x-1 transition-all ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center space-x-1.5 transition-colors ${
                 activeTab === 'sca'
-                  ? 'bg-blue-50 text-blue-700 shadow-sm'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                  ? 'bg-slate-900 text-white'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
               }`}
             >
-              <Building2 className="w-3.5 h-3.5 text-indigo-600" />
+              <Building2 className="w-3.5 h-3.5" />
               <span>SCA Directory</span>
             </button>
             <button
               onClick={() => setActiveTab('kiosk')}
-              className={`px-3 py-2 rounded-lg text-xs font-bold flex items-center space-x-1 transition-all ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center space-x-1.5 transition-colors ${
                 activeTab === 'kiosk'
-                  ? 'bg-blue-50 text-blue-700 shadow-sm'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                  ? 'bg-slate-900 text-white'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
               }`}
             >
-              <Laptop className="w-3.5 h-3.5 text-emerald-600" />
-              <span>Panchayat Kiosk</span>
+              <Terminal className="w-3.5 h-3.5" />
+              <span>Kiosk Node</span>
             </button>
             <button
               onClick={() => setActiveTab('savings')}
-              className={`px-3 py-2 rounded-lg text-xs font-bold transition-all ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center space-x-1.5 transition-colors ${
                 activeTab === 'savings'
-                  ? 'bg-blue-50 text-blue-700 shadow-sm'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                  ? 'bg-slate-900 text-white'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
               }`}
             >
-              Savings Tracker
+              <Target className="w-3.5 h-3.5" />
+              <span>Equity Accumulator</span>
             </button>
             <button
               onClick={() => setActiveTab('moratorium')}
-              className={`px-3 py-2 rounded-lg text-xs font-bold transition-all ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center space-x-1.5 transition-colors ${
                 activeTab === 'moratorium'
-                  ? 'bg-blue-50 text-blue-700 shadow-sm'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                  ? 'bg-slate-900 text-white'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
               }`}
             >
-              Moratorium Lifeline
+              <Clock className="w-3.5 h-3.5" />
+              <span>Moratorium Ledger</span>
             </button>
           </nav>
 
-          {/* Language Selector */}
-          <div className="flex items-center space-x-2">
-            <select
-              value={language}
-              onChange={(e) => setLanguage(e.target.value)}
-              className="text-xs font-black bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded-xl px-3 py-1.5 text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-xs transition-all cursor-pointer"
-            >
-              <option value="English">🇬🇧 English</option>
-              <option value="Hindi">🇮🇳 हिन्दी (Hindi)</option>
-              <option value="Bengali">🇮🇳 বাংলা (Bengali)</option>
-              <option value="Telugu">🇮🇳 తెలుగు (Telugu)</option>
-              <option value="Marathi">🇮🇳 मराठी (Marathi)</option>
-              <option value="Tamil">🇮🇳 தமிழ் (Tamil)</option>
-              <option value="Gujarati">🇮🇳 ગુજરાતી (Gujarati)</option>
-              <option value="Kannada">🇮🇳 ಕನ್ನಡ (Kannada)</option>
-              <option value="Malayalam">🇮🇳 മലയാളം (Malayalam)</option>
-              <option value="Punjabi">🇮🇳 ਪੰਜਾਬੀ (Punjabi)</option>
-              <option value="Odia">🇮🇳 ଓଡ଼ିଆ (Odia)</option>
-              <option value="Assamese">🇮🇳 অসমীয়া (Assamese)</option>
-              <option value="Urdu">🇮🇳 اردو (Urdu)</option>
-            </select>
+          {/* Institutional Language & Node Status */}
+          <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-1.5 bg-slate-50 border border-slate-200 rounded-lg px-2 py-1">
+              <Globe className="w-3.5 h-3.5 text-slate-500" />
+              <select
+                value={language}
+                onChange={handleLanguageChange}
+                className="bg-transparent text-xs font-semibold text-slate-700 outline-none cursor-pointer"
+              >
+                <option value="English">English</option>
+                <option value="Hindi">हिंदी (Hindi)</option>
+                <option value="Bengali">বাংলা (Bengali)</option>
+                <option value="Telugu">తెలుగు (Telugu)</option>
+                <option value="Marathi">मराठी (Marathi)</option>
+                <option value="Tamil">தமிழ் (Tamil)</option>
+                <option value="Gujarati">ગુજરાતી (Gujarati)</option>
+                <option value="Kannada">ಕನ್ನಡ (Kannada)</option>
+                <option value="Malayalam">മലയാളം (Malayalam)</option>
+                <option value="Punjabi">ਪੰਜਾਬੀ (Punjabi)</option>
+                <option value="Odia">ଓଡ଼ିଆ (Odia)</option>
+                <option value="Assamese">অসমীয়া (Assamese)</option>
+                <option value="Urdu">اردو (Urdu)</option>
+              </select>
+            </div>
           </div>
         </div>
       </div>

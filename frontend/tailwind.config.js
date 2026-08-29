@@ -7,20 +7,45 @@ export default {
   theme: {
     extend: {
       colors: {
-        mosje: {
-          50: '#f0f9ff',
-          100: '#e0f2fe',
-          500: '#0ea5e9',
-          600: '#0284c7',
-          700: '#0369a1',
-          800: '#075985',
-          900: '#0c4a6e',
+        canvas: {
+          bg: '#FBFBFA',
+          subtle: '#F4F4F2',
+          card: '#FFFFFF',
+          border: '#E4E4E0',
+          borderSubtle: '#EEEEEC'
         },
-        india: {
-          saffron: '#FF9933',
-          green: '#138808',
-          navy: '#000080',
+        slate: {
+          950: '#020617',
+          900: '#0F172A',
+          800: '#1E293B',
+          700: '#334155',
+          600: '#475569',
+          500: '#64748B',
+          400: '#94A3B8',
+          300: '#CBD5E1',
+          200: '#E2E8F0',
+          100: '#F1F5F9',
+          50: '#F8FAFC'
+        },
+        semantic: {
+          success: '#059669',
+          successBg: '#ECFDF5',
+          successBorder: '#A7F3D0',
+          warning: '#D97706',
+          warningBg: '#FFFBEB',
+          warningBorder: '#FDE68A',
+          danger: '#DC2626',
+          dangerBg: '#FEF2F2',
+          dangerBorder: '#FECACA'
         }
+      },
+      fontFamily: {
+        sans: ['Inter', 'system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'sans-serif'],
+        mono: ['JetBrains Mono', 'Fira Code', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace']
+      },
+      boxShadow: {
+        'fine': '0 1px 2px 0 rgba(0, 0, 0, 0.04)',
+        'institutional': '0 1px 3px 0 rgba(0, 0, 0, 0.06), 0 1px 2px -1px rgba(0, 0, 0, 0.04)'
       }
     },
   },
