@@ -99,11 +99,21 @@ export default function Navbar({ language, setLanguage, activeTab, setActiveTab 
             <select
               value={language}
               onChange={(e) => setLanguage(e.target.value)}
-              className="text-xs font-bold bg-slate-100 border border-slate-300 rounded-lg px-2.5 py-1.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="text-xs font-black bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded-xl px-3 py-1.5 text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-xs transition-all cursor-pointer"
             >
-              <option value="English">English (EN)</option>
-              <option value="Hindi">हिंदी (Hindi)</option>
-              <option value="Tamil">தமிழ் (Tamil)</option>
+              <option value="English">🇬🇧 English</option>
+              <option value="Hindi">🇮🇳 हिन्दी (Hindi)</option>
+              <option value="Bengali">🇮🇳 বাংলা (Bengali)</option>
+              <option value="Telugu">🇮🇳 తెలుగు (Telugu)</option>
+              <option value="Marathi">🇮🇳 मराठी (Marathi)</option>
+              <option value="Tamil">🇮🇳 தமிழ் (Tamil)</option>
+              <option value="Gujarati">🇮🇳 ગુજરાતી (Gujarati)</option>
+              <option value="Kannada">🇮🇳 ಕನ್ನಡ (Kannada)</option>
+              <option value="Malayalam">🇮🇳 മലയാളം (Malayalam)</option>
+              <option value="Punjabi">🇮🇳 ਪੰਜਾਬੀ (Punjabi)</option>
+              <option value="Odia">🇮🇳 ଓଡ଼ିଆ (Odia)</option>
+              <option value="Assamese">🇮🇳 অসমীয়া (Assamese)</option>
+              <option value="Urdu">🇮🇳 اردو (Urdu)</option>
             </select>
           </div>
         </div>

@@ -27,9 +27,9 @@ class TTSService {
   detectLanguage(text, requestedLang = 'Hindi') {
     if (!text) return 'en-IN';
 
-    // 1. Devanagari Unicode Range (\u0900-\u097F)
+    // 1. Devanagari Unicode Range (\u0900-\u097F) - Hindi / Marathi
     if (/[\u0900-\u097F]/.test(text)) {
-      return 'hi-IN';
+      return requestedLang === 'Marathi' ? 'mr-IN' : 'hi-IN';
     }
 
     // 2. Tamil Unicode Range (\u0B80-\u0BFF)
@@ -42,24 +42,61 @@ class TTSService {
       return 'te-IN';
     }
 
-    // 4. Bengali Unicode Range (\u0980-\u09FF)
+    // 4. Bengali & Assamese Unicode Range (\u0980-\u09FF)
     if (/[\u0980-\u09FF]/.test(text)) {
-      return 'bn-IN';
+      return requestedLang === 'Assamese' ? 'as-IN' : 'bn-IN';
     }
 
-    // 5. Common Hinglish Words
+    // 5. Gujarati Unicode Range (\u0A80-\u0AFF)
+    if (/[\u0A80-\u0AFF]/.test(text)) {
+      return 'gu-IN';
+    }
+
+    // 6. Kannada Unicode Range (\u0C80-\u0CFF)
+    if (/[\u0C80-\u0CFF]/.test(text)) {
+      return 'kn-IN';
+    }
+
+    // 7. Malayalam Unicode Range (\u0D00-\u0D7F)
+    if (/[\u0D00-\u0D7F]/.test(text)) {
+      return 'ml-IN';
+    }
+
+    // 8. Punjabi / Gurmukhi Unicode Range (\u0A00-\u0A7F)
+    if (/[\u0A00-\u0A7F]/.test(text)) {
+      return 'pa-IN';
+    }
+
+    // 9. Odia Unicode Range (\u0B00-\u0B7F)
+    if (/[\u0B00-\u0B7F]/.test(text)) {
+      return 'or-IN';
+    }
+
+    // 10. Urdu / Perso-Arabic Unicode Range (\u0600-\u06FF)
+    if (/[\u0600-\u06FF]/.test(text)) {
+      return 'ur-IN';
+    }
+
+    // 11. Common Hinglish Words
     const hinglishPattern = /\b(namaste|aapka|shuru|karein|rupaye|hazaar|lakh|dukaan|kirana|bataiye|yojana|byaj|vyapar|kharch|bhi|hai|hain|nahi|milenge|yojna|sarkar)\b/i;
     if (hinglishPattern.test(text)) {
       return 'hi-IN';
     }
 
-    // 6. Fallback to requested language
+    // 12. Complete 13-Language Indic Map
     const langMap = {
       'Hindi': 'hi-IN',
-      'Tamil': 'ta-IN',
+      'Bengali': 'bn-IN',
       'Telugu': 'te-IN',
       'Marathi': 'mr-IN',
-      'Bengali': 'bn-IN',
+      'Tamil': 'ta-IN',
+      'Gujarati': 'gu-IN',
+      'Kannada': 'kn-IN',
+      'Malayalam': 'ml-IN',
+      'Punjabi': 'pa-IN',
+      'Odia': 'or-IN',
+      'Assamese': 'as-IN',
+      'Urdu': 'ur-IN',
       'English': 'en-IN'
     };
 
