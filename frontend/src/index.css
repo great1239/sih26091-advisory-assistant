@@ -1,0 +1,39 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+  }
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+.gradient-mesh {
+  background-color: #f8fafc;
+  background-image: 
+    radial-gradient(at 0% 0%, hsla(217,91%,60%,0.08) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, hsla(38,92%,50%,0.08) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, hsla(142,76%,36%,0.05) 0px, transparent 50%);
+}
+
+.kiosk-screen {
+  background: #0f172a;
+  color: #38bdf8;
+  font-family: 'Courier New', Courier, monospace;
+}

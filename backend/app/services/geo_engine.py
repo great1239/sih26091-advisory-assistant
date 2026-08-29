@@ -1,0 +1,116 @@
+"""
+Geospatial Processing Engine (geo_engine.py)
+Processes exact latitude / longitude coordinates and constructs a rigid 5.0 km micro-market bounding box.
+"""
+import math
+from typing import Dict, Any, Tuple
+from app.models.schemas import GeoBounding
+
+DISTRICT_BENCHMARKS = {
+    "jodhpur": {"district": "Jodhpur", "state": "Rajasthan", "lat": 26.2389, "lon": 73.0243, "pop_density": 180, "road_density": 1.1},
+    "jaipur": {"district": "Jaipur", "state": "Rajasthan", "lat": 26.9124, "lon": 75.7873, "pop_density": 598, "road_density": 2.4},
+    "varanasi": {"district": "Varanasi", "state": "Uttar Pradesh", "lat": 25.3176, "lon": 82.9739, "pop_density": 2395, "road_density": 3.8},
+    "purnia": {"district": "Purnia", "state": "Bihar", "lat": 25.7771, "lon": 87.4753, "pop_density": 1014, "road_density": 1.6},
+    "saharsa": {"district": "Saharsa", "state": "Bihar", "lat": 25.8835, "lon": 86.5985, "pop_density": 1127, "road_density": 1.4},
+    "salem": {"district": "Salem", "state": "Tamil Nadu", "lat": 11.6643, "lon": 78.1460, "pop_density": 663, "road_density": 2.9},
+    "coimbatore": {"district": "Coimbatore", "state": "Tamil Nadu", "lat": 11.0168, "lon": 76.9558, "pop_density": 732, "road_density": 3.2},
+    "kolhapur": {"district": "Kolhapur", "state": "Maharashtra", "lat": 16.7050, "lon": 74.2433, "pop_density": 504, "road_density": 2.1},
+    "latur": {"district": "Latur", "state": "Maharashtra", "lat": 18.4088, "lon": 76.5604, "pop_density": 343, "road_density": 1.7},
+    "gwalior": {"district": "Gwalior", "state": "Madhya Pradesh", "lat": 26.2183, "lon": 78.1828, "pop_density": 446, "road_density": 1.8},
+    "haryana": {"district": "Karnal / Rohtak", "state": "Haryana", "lat": 29.6857, "lon": 76.9905, "pop_density": 573, "road_density": 2.2},
+    "anantapur": {"district": "Anantapur", "state": "Andhra Pradesh", "lat": 14.6819, "lon": 77.6006, "pop_density": 213, "road_density": 1.5},
+    "burdwan": {"district": "Burdwan", "state": "West Bengal", "lat": 23.2324, "lon": 87.8615, "pop_density": 1099, "road_density": 2.7}
+}
+
+class GeoSpatialEngine:
+    def __init__(self):
+        self.default_radius_km = 5.0  # Rigid 5km micro-market radius
+
+    def calculate_bounding_box(self, lat: float, lon: float, radius_km: float = 5.0) -> Tuple[float, float, float, float]:
+        """
+        Calculates (min_lat, min_lon, max_lat, max_lon) for an exact 5km radius circle.
+        1 deg lat ~ 111.0 km, 1 deg lon ~ 111.0 * cos(lat) km
+        """
+        lat_delta = radius_km / 111.0
+        cos_lat = math.cos(math.radians(lat))
+        lon_delta = radius_km / (111.0 * max(0.01, cos_lat))
+        
+        return (
+            round(lat - lat_delta, 4),
+            round(lon - lon_delta, 4),
+            round(lat + lat_delta, 4),
+            round(lon + lon_delta, 4)
+        )
+
+    def find_nearest_district(self, lat: float, lon: float) -> Dict[str, Any]:
+        """
+        Finds the closest benchmark district based on Euclidean/Haversine distance.
+        """
+        best_match = None
+        min_dist = float('inf')
+
+        for key, data in DISTRICT_BENCHMARKS.items():
+            d_lat = lat - data["lat"]
+            d_lon = lon - data["lon"]
+            dist = math.sqrt(d_lat**2 + d_lon**2)
+            if dist < min_dist:
+                min_dist = dist
+                best_match = data
+
+        if best_match and min_dist < 4.0:
+            return best_match
+
+        return {
+            "district": "Rural Cluster",
+            "state": "National Rural Zone",
+            "lat": lat,
+            "lon": lon,
+            "pop_density": 450,
+            "road_density": 1.8
+        }
+
+    def process_coordinates(
+        self,
+        latitude: float,
+        longitude: float,
+        location_label: str = "Pin-Drop Rural Location",
+        custom_radius_km: float = 5.0
+    ) -> GeoBounding:
+        """
+        Builds GeoBounding object using exact latitude/longitude coordinates.
+        """
+        district_data = self.find_nearest_district(latitude, longitude)
+        
+        return GeoBounding(
+            query_location=location_label or f"{district_data['district']}, {district_data['state']}",
+            latitude=latitude,
+            longitude=longitude,
+            radius_km=custom_radius_km,
+            district=district_data["district"],
+            state=district_data["state"],
+            population_density_per_sqkm=district_data["pop_density"],
+            road_network_density_km_per_sqkm=district_data["road_density"],
+            primary_hub=f"{district_data['district']} Mandi & Block HQ"
+        )
+
+    def process_location(self, query_location: str, custom_radius_km: float = 5.0) -> GeoBounding:
+        """
+        Legacy text location processor matching coordinates.
+        """
+        cleaned = query_location.lower()
+        for district, data in DISTRICT_BENCHMARKS.items():
+            if district in cleaned:
+                return self.process_coordinates(
+                    latitude=data["lat"],
+                    longitude=data["lon"],
+                    location_label=query_location,
+                    custom_radius_km=custom_radius_km
+                )
+        return self.process_coordinates(
+            latitude=26.2389,
+            longitude=73.0243,
+            location_label=query_location or "Jodhpur, Rajasthan",
+            custom_radius_km=custom_radius_km
+        )
+
+geo_engine = GeoSpatialEngine()

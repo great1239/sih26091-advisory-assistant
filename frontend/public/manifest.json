@@ -1,0 +1,40 @@
+{
+  "short_name": "MoSJE Advisory",
+  "name": "SIH26091 AI-Driven Business Advisory Assistant (MoSJE)",
+  "icons": [
+    {
+      "src": "/pwa-192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "/pwa-512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#0f172a",
+  "theme_color": "#1e3a8a",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "description": "Offline-first MoSJE concessional credit appraisal and hyper-local spatial feasibility advisory assistant for rural entrepreneurs.",
+  "categories": ["finance", "business", "productivity", "government"],
+  "shortcuts": [
+    {
+      "name": "New Assessment",
+      "short_name": "Assess",
+      "description": "Start a new business feasibility assessment",
+      "url": "/?tab=assessment",
+      "icons": [{ "src": "/pwa-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "GeM Machinery Store",
+      "short_name": "Machinery",
+      "description": "Explore certified equipment catalog",
+      "url": "/?tab=equipment",
+      "icons": [{ "src": "/pwa-192.png", "sizes": "192x192" }]
+    }
+  ]
+}
