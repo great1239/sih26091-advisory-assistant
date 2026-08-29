@@ -7,6 +7,16 @@ from typing import Dict, Any, Tuple
 from app.models.schemas import GeoBounding
 
 DISTRICT_BENCHMARKS = {
+    "delhi": {"district": "Delhi / NCR", "state": "Delhi", "lat": 28.6139, "lon": 77.2090, "pop_density": 11320, "road_density": 12.5},
+    "ncr": {"district": "Delhi / NCR", "state": "Delhi", "lat": 28.6139, "lon": 77.2090, "pop_density": 11320, "road_density": 12.5},
+    "mumbai": {"district": "Mumbai City", "state": "Maharashtra", "lat": 19.0760, "lon": 72.8777, "pop_density": 20000, "road_density": 15.0},
+    "bengaluru": {"district": "Bengaluru Urban", "state": "Karnataka", "lat": 12.9716, "lon": 77.5946, "pop_density": 4381, "road_density": 8.4},
+    "hyderabad": {"district": "Hyderabad", "state": "Telangana", "lat": 17.3850, "lon": 78.4867, "pop_density": 18480, "road_density": 11.2},
+    "chennai": {"district": "Chennai", "state": "Tamil Nadu", "lat": 13.0827, "lon": 80.2707, "pop_density": 26553, "road_density": 14.1},
+    "kolkata": {"district": "Kolkata", "state": "West Bengal", "lat": 22.5726, "lon": 88.3639, "pop_density": 24000, "road_density": 13.8},
+    "lucknow": {"district": "Lucknow", "state": "Uttar Pradesh", "lat": 26.8467, "lon": 80.9462, "pop_density": 1815, "road_density": 4.1},
+    "patna": {"district": "Patna", "state": "Bihar", "lat": 25.5941, "lon": 85.1376, "pop_density": 1823, "road_density": 3.9},
+    "bhopal": {"district": "Bhopal", "state": "Madhya Pradesh", "lat": 23.2599, "lon": 77.4126, "pop_density": 855, "road_density": 2.8},
     "jodhpur": {"district": "Jodhpur", "state": "Rajasthan", "lat": 26.2389, "lon": 73.0243, "pop_density": 180, "road_density": 1.1},
     "jaipur": {"district": "Jaipur", "state": "Rajasthan", "lat": 26.9124, "lon": 75.7873, "pop_density": 598, "road_density": 2.4},
     "varanasi": {"district": "Varanasi", "state": "Uttar Pradesh", "lat": 25.3176, "lon": 82.9739, "pop_density": 2395, "road_density": 3.8},
@@ -17,7 +27,8 @@ DISTRICT_BENCHMARKS = {
     "kolhapur": {"district": "Kolhapur", "state": "Maharashtra", "lat": 16.7050, "lon": 74.2433, "pop_density": 504, "road_density": 2.1},
     "latur": {"district": "Latur", "state": "Maharashtra", "lat": 18.4088, "lon": 76.5604, "pop_density": 343, "road_density": 1.7},
     "gwalior": {"district": "Gwalior", "state": "Madhya Pradesh", "lat": 26.2183, "lon": 78.1828, "pop_density": 446, "road_density": 1.8},
-    "haryana": {"district": "Karnal / Rohtak", "state": "Haryana", "lat": 29.6857, "lon": 76.9905, "pop_density": 573, "road_density": 2.2},
+    "karnal": {"district": "Karnal", "state": "Haryana", "lat": 29.6857, "lon": 76.9905, "pop_density": 573, "road_density": 2.2},
+    "rohtak": {"district": "Rohtak", "state": "Haryana", "lat": 28.8955, "lon": 76.6066, "pop_density": 608, "road_density": 2.3},
     "anantapur": {"district": "Anantapur", "state": "Andhra Pradesh", "lat": 14.6819, "lon": 77.6006, "pop_density": 213, "road_density": 1.5},
     "burdwan": {"district": "Burdwan", "state": "West Bengal", "lat": 23.2324, "lon": 87.8615, "pop_density": 1099, "road_density": 2.7}
 }

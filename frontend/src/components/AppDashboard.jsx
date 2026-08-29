@@ -434,42 +434,155 @@ export default function AppDashboard({ language }) {
                 </div>
               )}
 
-              {/* 3. Live Mandi Wholesale Sourcing (data.gov.in Integration) */}
-              {mandiPricing && (
+              {/* 3. Sector-Adaptive Local Procurement & Unit Economics Card */}
+              {assessment && (
                 <div className="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                      <span className="p-1.5 rounded-lg bg-amber-100 text-amber-800">
-                        <Store className="w-4 h-4" />
-                      </span>
-                      <div>
-                        <span className="text-[10px] font-black uppercase tracking-wider text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
-                          data.gov.in Real-Time Mandis
+                  {/* CASE A: Cafe / Restaurant / Tea Stall / Food Service */}
+                  {/cafe|coffee|tea|restaurant|food|canteen|dhaba|snack|bakery|fast food|beverage|eating/i.test(assessment?.business_category || '') ? (
+                    <>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <span className="p-1.5 rounded-lg bg-amber-100 text-amber-800">
+                            <Store className="w-4 h-4" />
+                          </span>
+                          <div>
+                            <span className="text-[10px] font-black uppercase tracking-wider text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                              Food & Beverage Unit Economics
+                            </span>
+                            <h3 className="text-sm font-black text-slate-900 mt-0.5">
+                              {assessment?.business_category} Sourcing & Margin Model
+                            </h3>
+                          </div>
+                        </div>
+                        <span className="text-xs font-black text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-xl">
+                          68% – 74% Gross Margin
                         </span>
-                        <h3 className="text-sm font-black text-slate-900 mt-0.5">
-                          {mandiPricing?.district || 'District'} APMC Wholesale Benchmark
-                        </h3>
                       </div>
-                    </div>
-                    <span className="text-xs font-black text-slate-700 bg-slate-100 px-2.5 py-1 rounded-xl">
-                      {mandiPricing?.total_mandi_arrivals || 0} Active Mandis
-                    </span>
-                  </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
-                    {mandiPricing?.mandi_listings && mandiPricing.mandi_listings.slice(0, 4).map((m, idx) => (
-                      <div key={idx} className="p-2.5 rounded-2xl bg-slate-50 border border-slate-200/70 text-xs space-y-1">
-                        <div className="flex justify-between font-bold text-slate-800">
-                          <span className="truncate">{m?.commodity || 'Produce'}</span>
-                          <span className="text-emerald-700 font-black">₹{m?.modal_price || 0}/Qtl</span>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+                        <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200/70 text-xs space-y-1">
+                          <span className="text-[10px] font-black text-slate-400 uppercase">Customer Footfall & Ticket Size</span>
+                          <p className="font-extrabold text-slate-900 text-sm">90 – 140 Orders / Day</p>
+                          <p className="text-[10px] text-slate-600">Avg Ticket Value: <span className="font-bold text-emerald-700">₹55 – ₹110</span> (Peak: 8-11am & 5-8pm)</p>
                         </div>
-                        <div className="flex justify-between text-[10px] text-slate-500">
-                          <span className="truncate">{m?.market || 'APMC'}</span>
-                          <span>Range: ₹{m?.min_price || 0} - ₹{m?.max_price || 0}</span>
+
+                        <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200/70 text-xs space-y-1">
+                          <span className="text-[10px] font-black text-slate-400 uppercase">Dairy & Beverage Supply</span>
+                          <p className="font-extrabold text-slate-900 text-sm">Farmgate Fresh Milk: ₹48–₹54 / L</p>
+                          <p className="text-[10px] text-slate-600">Wholesale Tea/Coffee Beans: <span className="font-bold text-slate-800">₹280–₹390 / kg</span></p>
                         </div>
                       </div>
-                    ))}
-                  </div>
+                    </>
+                  ) : /kirana|grocery|provision|general store|shop|store|supermarket|fmcg/i.test(assessment?.business_category || '') ? (
+                    /* CASE B: FMCG Retail / Kirana */
+                    <>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <span className="p-1.5 rounded-lg bg-blue-100 text-blue-800">
+                            <Store className="w-4 h-4" />
+                          </span>
+                          <div>
+                            <span className="text-[10px] font-black uppercase tracking-wider text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
+                              FMCG Retail Trade Benchmark
+                            </span>
+                            <h3 className="text-sm font-black text-slate-900 mt-0.5">
+                              Inventory Turnover & Distributor Margin
+                            </h3>
+                          </div>
+                        </div>
+                        <span className="text-xs font-black text-blue-800 bg-blue-50 border border-blue-200 px-2.5 py-1 rounded-xl">
+                          15% – 19% Blended Margin
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+                        <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200/70 text-xs space-y-1">
+                          <span className="text-[10px] font-black text-slate-400 uppercase">Working Capital Turnover</span>
+                          <p className="font-extrabold text-slate-900 text-sm">16 – 22 Days Cycle</p>
+                          <p className="text-[10px] text-slate-600">Fast-moving staples & packaged dairy drive 60% daily velocity.</p>
+                        </div>
+
+                        <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200/70 text-xs space-y-1">
+                          <span className="text-[10px] font-black text-slate-400 uppercase">Distributor Credit Terms</span>
+                          <p className="font-extrabold text-slate-900 text-sm">7 – 14 Days Credit Window</p>
+                          <p className="text-[10px] text-slate-600">Enables rolling inventory without high upfront debt.</p>
+                        </div>
+                      </div>
+                    </>
+                  ) : mandiPricing && mandiPricing?.mandi_listings?.length > 0 ? (
+                    /* CASE C: Agro-Processing / Mandi Crops */
+                    <>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <span className="p-1.5 rounded-lg bg-amber-100 text-amber-800">
+                            <Store className="w-4 h-4" />
+                          </span>
+                          <div>
+                            <span className="text-[10px] font-black uppercase tracking-wider text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                              data.gov.in Real-Time Mandis
+                            </span>
+                            <h3 className="text-sm font-black text-slate-900 mt-0.5">
+                              {mandiPricing?.district || 'District'} APMC Wholesale Benchmark
+                            </h3>
+                          </div>
+                        </div>
+                        <span className="text-xs font-black text-slate-700 bg-slate-100 px-2.5 py-1 rounded-xl">
+                          {mandiPricing?.total_mandi_arrivals || 0} Active Mandis
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                        {mandiPricing.mandi_listings.slice(0, 4).map((m, idx) => (
+                          <div key={idx} className="p-2.5 rounded-2xl bg-slate-50 border border-slate-200/70 text-xs space-y-1">
+                            <div className="flex justify-between font-bold text-slate-800">
+                              <span className="truncate">{m?.commodity || 'Produce'}</span>
+                              <span className="text-emerald-700 font-black">₹{m?.modal_price || 0}/Qtl</span>
+                            </div>
+                            <div className="flex justify-between text-[10px] text-slate-500">
+                              <span className="truncate">{m?.market || 'APMC'}</span>
+                              <span>Range: ₹{m?.min_price || 0} - ₹{m?.max_price || 0}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  ) : (
+                    /* CASE D: Service / Tailoring / Repair / Craft */
+                    <>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <span className="p-1.5 rounded-lg bg-purple-100 text-purple-800">
+                            <Store className="w-4 h-4" />
+                          </span>
+                          <div>
+                            <span className="text-[10px] font-black uppercase tracking-wider text-purple-700 bg-purple-50 px-2 py-0.5 rounded border border-purple-200">
+                              Vocational Service Yield
+                            </span>
+                            <h3 className="text-sm font-black text-slate-900 mt-0.5">
+                              {assessment?.business_category} Labor & Material Economics
+                            </h3>
+                          </div>
+                        </div>
+                        <span className="text-xs font-black text-purple-800 bg-purple-50 border border-purple-200 px-2.5 py-1 rounded-xl">
+                          ₹190 – ₹280 / Billable Hour
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+                        <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200/70 text-xs space-y-1">
+                          <span className="text-[10px] font-black text-slate-400 uppercase">Daily Productivity</span>
+                          <p className="font-extrabold text-slate-900 text-sm">6.5 – 8.0 Billable Hours / Day</p>
+                          <p className="text-[10px] text-slate-600">High direct-to-consumer labor margin with minimal raw material perishability.</p>
+                        </div>
+
+                        <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200/70 text-xs space-y-1">
+                          <span className="text-[10px] font-black text-slate-400 uppercase">Consumables & Overhead</span>
+                          <p className="font-extrabold text-slate-900 text-sm">₹1,400 – ₹2,200 / Month</p>
+                          <p className="text-[10px] text-slate-600">Low recurring overhead preserves maximum net operating cashflow.</p>
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
               )}
 
