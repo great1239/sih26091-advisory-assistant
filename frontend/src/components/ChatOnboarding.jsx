@@ -18,6 +18,7 @@ import {
   Layers,
   Compass,
   Volume2,
+  VolumeX,
   RotateCcw,
   MessageSquare
 } from 'lucide-react';
@@ -26,6 +27,7 @@ import confetti from 'canvas-confetti';
 import VoiceAssistant from './VoiceAssistant';
 import LiveLocationMap from './LiveLocationMap';
 import { offlineStorage } from '../services/offlineStorage';
+import { ttsService } from '../services/ttsService';
 
 export default function ChatOnboarding({ onAssessmentComplete, language }) {
   const [messages, setMessages] = useState([
@@ -56,6 +58,7 @@ export default function ChatOnboarding({ onAssessmentComplete, language }) {
     geographic_location: 'Selected Map Plot'
   });
   const [extractedDisplay, setExtractedDisplay] = useState(null);
+  const [speakingMessageId, setSpeakingMessageId] = useState(null);
 
   const messagesEndRef = useRef(null);
 
@@ -67,32 +70,41 @@ export default function ChatOnboarding({ onAssessmentComplete, language }) {
     scrollToBottom();
   }, [messages, loading]);
 
+  // Clean up speech on unmount
+  useEffect(() => {
+    return () => {
+      ttsService.stop();
+    };
+  }, []);
+
   const socialCategoryShortcuts = [
     'OBC', 'SC', 'ST', 'Women', 'General', 'PwD / Divyang', 'Safai Karamchari'
   ];
 
   // Text-To-Speech read aloud in Indic voice
-  const speakMessage = (textToSpeak) => {
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-      const cleanText = typeof textToSpeak === 'string'
-        ? textToSpeak.replace(/[*#_`]/g, '')
-        : 'Namaste! I am Vikas Sarthi, your AI Advisor.';
-      const utterance = new SpeechSynthesisUtterance(cleanText);
-      utterance.rate = 0.95;
-      utterance.pitch = 1.0;
-      if (language === 'hi') utterance.lang = 'hi-IN';
-      else if (language === 'ta') utterance.lang = 'ta-IN';
-      else if (language === 'te') utterance.lang = 'te-IN';
-      else if (language === 'mr') utterance.lang = 'mr-IN';
-      else if (language === 'bn') utterance.lang = 'bn-IN';
-      else utterance.lang = 'en-IN';
-      window.speechSynthesis.speak(utterance);
+  const speakMessage = (msgId, textToSpeak) => {
+    if (speakingMessageId === msgId) {
+      ttsService.stop();
+      setSpeakingMessageId(null);
+      return;
     }
+
+    const cleanText = typeof textToSpeak === 'string'
+      ? textToSpeak
+      : 'Namaste! I am Vikas Sarthi, your MoSJE AI Business Advisor.';
+
+    setSpeakingMessageId(msgId);
+    ttsService.speak(cleanText, {
+      language: language || 'Hindi',
+      onEnd: () => setSpeakingMessageId(null),
+      onError: () => setSpeakingMessageId(null)
+    });
   };
 
   // Reset conversation
   const handleResetChat = () => {
+    ttsService.stop();
+    setSpeakingMessageId(null);
     setMessages([
       {
         id: Date.now().toString(),
@@ -283,12 +295,25 @@ export default function ChatOnboarding({ onAssessmentComplete, language }) {
                       </span>
                       <button
                         type="button"
-                        onClick={() => speakMessage(m.rawText || m.text)}
-                        title="Listen Aloud (Voice TTS)"
-                        className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-lg bg-slate-100 hover:bg-blue-100 text-slate-600 hover:text-blue-700 text-[10px] font-bold transition-all"
+                        onClick={() => speakMessage(m.id, m.rawText || m.text)}
+                        title={speakingMessageId === m.id ? "Stop Audio" : "Listen Aloud (Voice TTS)"}
+                        className={`inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-xl text-[10px] font-black transition-all shadow-xs ${
+                          speakingMessageId === m.id
+                            ? 'bg-amber-500 text-white animate-pulse shadow-amber-500/30'
+                            : 'bg-slate-100 hover:bg-blue-100 text-slate-700 hover:text-blue-800 border border-slate-200/80'
+                        }`}
                       >
-                        <Volume2 className="w-3 h-3" />
-                        <span>Listen</span>
+                        {speakingMessageId === m.id ? (
+                          <>
+                            <VolumeX className="w-3 h-3 text-white" />
+                            <span>Stop Audio</span>
+                          </>
+                        ) : (
+                          <>
+                            <Volume2 className="w-3 h-3 text-blue-600" />
+                            <span>Listen Aloud</span>
+                          </>
+                        )}
                       </button>
                     </div>
                   )}
