@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   TrendingUp,
   Target,
@@ -16,7 +16,10 @@ import {
   Layers,
   Banknote,
   DollarSign,
-  Compass
+  Compass,
+  Volume2,
+  VolumeX,
+  FileText
 } from 'lucide-react';
 import {
   AreaChart,
@@ -28,6 +31,8 @@ import {
   ReferenceDot,
   ReferenceLine
 } from 'recharts';
+import { useSpeech } from '../context/SpeechContext';
+import { CreditAppraisalDossierPDFButton } from './CreditAppraisalDossier';
 
 export interface AmortizationScheduleItem {
   period_number: number;
@@ -130,6 +135,7 @@ export interface ComprehensiveAssessmentResponse {
   beneficiary_name?: string;
   business_category: string;
   social_category?: string;
+  ui_translation_language?: string; // Dynamic backend language signal (e.g., "hi-IN", "ta-IN", "en-US")
   geo_bounding?: {
     district: string;
     state: string;
@@ -154,6 +160,15 @@ export const FeasibilityResults: React.FC<FeasibilityResultsProps> = ({
   onApplyPivot,
   onGenerateDPR
 }) => {
+  const { currentLanguage, setLanguage, speak, stopSpeaking, isSpeaking, speakingMessageId, t } = useSpeech();
+
+  // Dynamic Native-Language Synchronization from Gemini Backend Payload
+  useEffect(() => {
+    if (assessment?.ui_translation_language && assessment.ui_translation_language !== currentLanguage) {
+      setLanguage(assessment.ui_translation_language);
+    }
+  }, [assessment?.ui_translation_language, currentLanguage, setLanguage]);
+
   if (!assessment) return null;
 
   const voidData = assessment.void_analysis;
@@ -163,7 +178,6 @@ export const FeasibilityResults: React.FC<FeasibilityResultsProps> = ({
   const pivots = assessment.strategic_pivots || [];
 
   // 1. Dynamic Traffic-Light Color Logic for Market Void Score
-  // Void ratio ranges: >= 0.35 -> High (>75%), 0.05 - 0.35 -> Moderate (40-75%), < 0.05 -> Saturated (<40%)
   const voidScore = Math.min(
     100,
     Math.max(
@@ -183,7 +197,7 @@ export const FeasibilityResults: React.FC<FeasibilityResultsProps> = ({
         barColor: 'bg-emerald-500',
         textColor: 'text-emerald-700',
         borderGlow: 'border-emerald-200 shadow-emerald-50',
-        label: 'High Opportunity Void'
+        label: t('high_opportunity') || 'High Opportunity Void'
       };
     }
     if (score >= 40) {
@@ -192,7 +206,7 @@ export const FeasibilityResults: React.FC<FeasibilityResultsProps> = ({
         barColor: 'bg-amber-500',
         textColor: 'text-amber-700',
         borderGlow: 'border-amber-200 shadow-amber-50',
-        label: 'Moderate Void Capacity'
+        label: t('moderate_opportunity') || 'Moderate Void Capacity'
       };
     }
     return {
@@ -200,7 +214,7 @@ export const FeasibilityResults: React.FC<FeasibilityResultsProps> = ({
       barColor: 'bg-rose-500',
       textColor: 'text-rose-700',
       borderGlow: 'border-rose-200 shadow-rose-50',
-      label: 'Saturated Local Market'
+      label: t('market_saturated') || 'Saturated Local Market'
     };
   };
 
@@ -214,9 +228,9 @@ export const FeasibilityResults: React.FC<FeasibilityResultsProps> = ({
   const generateRunwayData = () => {
     const margin = fin?.available_margin_capital || 25000;
     const loanVal = fin?.concessional_loan_eligibility || 225000;
-    const workingCapitalStart = margin + loanVal * 0.35; // Initial operating buffer
-    const monthlyBurn = workingCapitalStart * 0.12; // Operational ramp burn
-    const monthlyRevRamp = workingCapitalStart * 0.16; // Sales revenue trajectory
+    const workingCapitalStart = margin + loanVal * 0.35;
+    const monthlyBurn = workingCapitalStart * 0.12;
+    const monthlyRevRamp = workingCapitalStart * 0.16;
     const emi = fin?.monthly_emi_post_moratorium || 3400;
     const morMonths = fin?.moratorium_months || 3;
 
@@ -244,8 +258,55 @@ export const FeasibilityResults: React.FC<FeasibilityResultsProps> = ({
 
   const runwayData = generateRunwayData();
 
+  // Voice narration text
+  const handleVocalizeSummary = () => {
+    const summarySpeech = `Feasibility Analysis for ${assessment.business_category}. Total project sized at ${Math.round(
+      fin?.total_project_cost || 0
+    )} rupees with 90% concessional loan eligibility of ${Math.round(
+      fin?.concessional_loan_eligibility || 0
+    )} rupees at ${fin?.final_subvented_interest_rate || 7} percent interest. Market void score is ${voidScore} out of 100. ${
+      isSafeZone
+        ? 'Water and ecological clearances are approved.'
+        : 'Warning: Ground water dark zone detected, strategic pivot recommended.'
+    }`;
+
+    speak(summarySpeech, 'feasibility-summary');
+  };
+
   return (
     <div className="space-y-6 w-full font-sans text-slate-800 antialiased">
+      {/* Top Controls: Voice Readout & Language Indicator */}
+      <div className="flex items-center justify-between pb-1 border-b border-slate-100">
+        <div className="flex items-center space-x-2">
+          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span className="text-xs font-bold text-slate-600">
+            {t('language')}: <span className="font-mono text-slate-800 uppercase">{currentLanguage}</span>
+          </span>
+        </div>
+
+        <button
+          type="button"
+          onClick={handleVocalizeSummary}
+          className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center space-x-1.5 transition-all shadow-xs border ${
+            isSpeaking && speakingMessageId === 'feasibility-summary'
+              ? 'bg-amber-100 text-amber-900 border-amber-300 animate-pulse'
+              : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200'
+          }`}
+        >
+          {isSpeaking && speakingMessageId === 'feasibility-summary' ? (
+            <>
+              <VolumeX className="w-3.5 h-3.5 text-amber-700" />
+              <span>{t('stop_audio') || 'Stop Voice'}</span>
+            </>
+          ) : (
+            <>
+              <Volume2 className="w-3.5 h-3.5 text-blue-600" />
+              <span>{t('listen_audio') || 'Listen Summary'}</span>
+            </>
+          )}
+        </button>
+      </div>
+
       {/* ========================================================================= */}
       {/* 1. BENTO BOX GRID ARCHITECTURE (TOP ROW - TRAFFIC LIGHT INDICATORS)        */}
       {/* ========================================================================= */}
@@ -257,7 +318,7 @@ export const FeasibilityResults: React.FC<FeasibilityResultsProps> = ({
           <div>
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold tracking-wider uppercase text-slate-500">
-                5km Market Void Index
+                {t('market_void_analysis') || '5km Market Void Index'}
               </span>
               <span
                 className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${voidTheme.badgeBg}`}
@@ -302,7 +363,7 @@ export const FeasibilityResults: React.FC<FeasibilityResultsProps> = ({
           <div>
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold tracking-wider uppercase text-slate-500">
-                Ecological & Aquifer Clearance
+                {t('ecological_safety') || 'Ecological & Aquifer Clearance'}
               </span>
               <div
                 className={`flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${
@@ -331,8 +392,8 @@ export const FeasibilityResults: React.FC<FeasibilityResultsProps> = ({
               </div>
               <p className="mt-1 text-xs text-slate-600 line-clamp-2">
                 {isSafeZone
-                  ? 'CGWB telemetry confirms safe unconfined aquifer depth. No borewell veto restriction.'
-                  : 'CGWB dark zone: Over-exploited groundwater restricts heavy extraction. Shift to dry aggregation.'}
+                  ? 'CGWB telemetry confirms safe unconfined aquifer depth. No borewell extraction restrictions.'
+                  : 'CGWB dark zone: Over-exploited groundwater table restricts industrial borewell extraction.'}
               </p>
             </div>
           </div>
@@ -365,7 +426,7 @@ export const FeasibilityResults: React.FC<FeasibilityResultsProps> = ({
           <div>
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold tracking-wider uppercase text-slate-500">
-                MoSJE Concessional Loan (90%)
+                {t('concessional_loan') || 'MoSJE Concessional Loan (90%)'}
               </span>
               <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase bg-blue-50 text-blue-700 border border-blue-200">
                 {fin?.scheme_tier || 'SCA Direct'}
@@ -404,7 +465,7 @@ export const FeasibilityResults: React.FC<FeasibilityResultsProps> = ({
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
               <span className="text-xs font-semibold tracking-wider uppercase text-slate-500">
-                Financial Runway & Cash Burn
+                {t('financial_blueprint') || 'Financial Runway & Cash Burn'}
               </span>
               <h3 className="text-base font-extrabold text-slate-900 mt-0.5">
                 6-Month Moratorium Survival Trajectory
@@ -674,28 +735,36 @@ export const FeasibilityResults: React.FC<FeasibilityResultsProps> = ({
       </div>
 
       {/* ========================================================================= */}
-      {/* 4. CALL TO ACTION & DPR GENERATION FOOTER                                 */}
+      {/* 4. INSTITUTIONAL PDF DOSSIER & DPR GENERATION FOOTER                      */}
       {/* ========================================================================= */}
-      {onGenerateDPR && (
-        <div className="p-5 rounded-2xl bg-gradient-to-r from-blue-700 via-indigo-700 to-blue-800 text-white flex flex-col sm:flex-row items-center justify-between gap-4 shadow-lg shadow-blue-500/20">
-          <div className="space-y-1 text-center sm:text-left">
-            <h4 className="text-base font-black flex items-center justify-center sm:justify-start space-x-2">
-              <Sparkles className="w-4 h-4 text-amber-300" />
-              <span>Generate Bank-Ready Detailed Project Report (DPR)</span>
-            </h4>
-            <p className="text-xs text-blue-100">
-              Download complete PDF dossier with SCA credit subvention notes and 5km spatial feasibility maps.
-            </p>
-          </div>
-          <button
-            onClick={onGenerateDPR}
-            className="px-5 py-2.5 bg-white hover:bg-slate-50 text-blue-800 font-extrabold rounded-xl text-xs shadow-md transition-all shrink-0 flex items-center space-x-1.5"
-          >
-            <span>Download DPR PDF</span>
-            <ArrowUpRight className="w-4 h-4" />
-          </button>
+      <div className="p-5 rounded-2xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl border border-slate-800">
+        <div className="space-y-1 text-center sm:text-left">
+          <h4 className="text-base font-black flex items-center justify-center sm:justify-start space-x-2 text-white">
+            <Sparkles className="w-4 h-4 text-amber-400" />
+            <span>Institutional Credit Appraisal Dossier & DPR</span>
+          </h4>
+          <p className="text-xs text-slate-300">
+            Export official banking appraisal PDF with MoSJE subvention terms and 5km spatial feasibility maps.
+          </p>
         </div>
-      )}
+
+        <div className="flex items-center space-x-2.5 shrink-0">
+          <CreditAppraisalDossierPDFButton
+            assessment={assessment}
+            buttonLabel="Download Credit Dossier (PDF)"
+          />
+
+          {onGenerateDPR && (
+            <button
+              onClick={onGenerateDPR}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl text-xs shadow transition-all flex items-center space-x-1"
+            >
+              <span>Full DPR</span>
+              <ArrowUpRight className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
+      </div>
     </div>
   );
 };

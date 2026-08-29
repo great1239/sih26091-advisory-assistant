@@ -6,13 +6,15 @@ import SCALocator from './components/SCALocator';
 import KioskSimulator from './components/KioskSimulator';
 import SavingsGoalTracker from './components/SavingsGoalTracker';
 import MoratoriumLifeline from './components/MoratoriumLifeline';
+import { SpeechProvider } from './context/SpeechContext';
 
 export default function App() {
   const [language, setLanguage] = useState('English');
   const [activeTab, setActiveTab] = useState('dashboard');
 
   return (
-    <div className="min-h-screen bg-slate-100/70 text-slate-900 flex flex-col font-sans">
+    <SpeechProvider initialLanguage="en-US">
+      <div className="min-h-screen bg-slate-100/70 text-slate-900 flex flex-col font-sans">
       <Navbar
         language={language}
         setLanguage={setLanguage}
@@ -102,5 +104,6 @@ export default function App() {
         </div>
       </footer>
     </div>
+    </SpeechProvider>
   );
 }
