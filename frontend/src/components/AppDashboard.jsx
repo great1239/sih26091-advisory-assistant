@@ -49,8 +49,23 @@ export default function AppDashboard({ language }) {
   const [isDownloadingDPR, setIsDownloadingDPR] = useState(false);
 
   // When user selects location on Map
-  const handleLocationSelect = (lat, lng) => {
-    setSelectedCoords({ lat, lng });
+  const handleLocationSelect = (loc, maybeLng) => {
+    if (!loc) return;
+    let lat = 28.6139;
+    let lng = 77.2090;
+
+    if (typeof loc === 'object') {
+      lat = loc.latitude ?? loc.lat ?? 28.6139;
+      lng = loc.longitude ?? loc.lng ?? 77.2090;
+    } else if (typeof loc === 'number' || !isNaN(parseFloat(loc))) {
+      lat = parseFloat(loc);
+      lng = maybeLng !== undefined ? parseFloat(maybeLng) : 77.2090;
+    }
+
+    setSelectedCoords({
+      lat: typeof lat === 'number' && !isNaN(lat) ? lat : 28.6139,
+      lng: typeof lng === 'number' && !isNaN(lng) ? lng : 77.2090
+    });
   };
 
   // When conversational NLP completes and triggers assessment
@@ -131,7 +146,7 @@ export default function AppDashboard({ language }) {
           <p className="text-xs text-slate-300 mt-0.5 flex items-center space-x-1">
             <MapPin className="w-3.5 h-3.5 text-rose-400" />
             <span>
-              Center-Point: ({selectedCoords.lat.toFixed(4)}, {selectedCoords.lng.toFixed(4)}) • 5.0 km Micro-Market
+              Center-Point: ({Number(selectedCoords?.lat || 28.6139).toFixed(4)}, {Number(selectedCoords?.lng || 77.2090).toFixed(4)}) • 5.0 km Micro-Market
             </span>
           </p>
         </div>

@@ -174,24 +174,39 @@ export default function LiveLocationMap({ onLocationSelect, initialCoords }) {
   }, [tileProvider]);
 
   const handlePositionChange = (newPos, shouldFly = true) => {
-    setPosition(newPos);
+    if (!newPos || isNaN(newPos.lat) || isNaN(newPos.lng)) return;
+    const safePos = {
+      lat: parseFloat(newPos.lat.toFixed(5)),
+      lng: parseFloat(newPos.lng.toFixed(5))
+    };
+    setPosition(safePos);
 
-    if (circleRef.current) {
-      circleRef.current.setLatLng([newPos.lat, newPos.lng]);
-    }
-    if (markerRef.current) {
-      markerRef.current.setLatLng([newPos.lat, newPos.lng]);
-    }
-    if (shouldFly && mapInstanceRef.current) {
-      mapInstanceRef.current.flyTo([newPos.lat, newPos.lng], 13, { duration: 1.0 });
+    try {
+      if (circleRef.current) {
+        circleRef.current.setLatLng([safePos.lat, safePos.lng]);
+      }
+      if (markerRef.current) {
+        markerRef.current.setLatLng([safePos.lat, safePos.lng]);
+      }
+      if (shouldFly && mapInstanceRef.current) {
+        mapInstanceRef.current.flyTo([safePos.lat, safePos.lng], 13, { duration: 1.0 });
+      }
+    } catch (e) {
+      console.warn('[Map position update error]:', e);
     }
 
     if (onLocationSelect) {
-      onLocationSelect({
-        latitude: newPos.lat,
-        longitude: newPos.lng,
-        geographic_location: `Micro-Market Plot (${newPos.lat.toFixed(4)}, ${newPos.lng.toFixed(4)})`
-      });
+      try {
+        onLocationSelect({
+          latitude: safePos.lat,
+          longitude: safePos.lng,
+          lat: safePos.lat,
+          lng: safePos.lng,
+          geographic_location: `Micro-Market Plot (${safePos.lat.toFixed(4)}, ${safePos.lng.toFixed(4)})`
+        });
+      } catch (err) {
+        console.warn('[onLocationSelect callback error]:', err);
+      }
     }
   };
 
