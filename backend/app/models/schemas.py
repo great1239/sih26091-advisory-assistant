@@ -16,6 +16,7 @@ class OnboardingInput(BaseModel):
     land_asset_status: str = Field(default="Owned", description="Owned, Leased, or None")
     years_in_industry: int = Field(default=0, ge=0, description="Prior industry experience in years")
     specific_skillsets: Optional[List[str]] = Field(default=[], description="Key artisan or technical skills")
+    ui_translation_language: Optional[str] = Field(default="hi-IN", description="Preferred UI translation language")
     preferred_language: Optional[str] = Field(default="English", description="Preferred Indic dialect")
 
 class GeoBounding(BaseModel):
@@ -202,6 +203,7 @@ class AssessmentResponse(BaseModel):
     moratorium_milestones: List[MoratoriumNudge]
     dpr_report_available: bool
     summary_audio_text: str
+    ui_translation_language: Optional[str] = Field(default="hi-IN")
 
 class SavingsTrackerInput(BaseModel):
     target_project_cost: float

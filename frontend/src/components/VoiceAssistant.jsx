@@ -1,78 +1,37 @@
-import React, { useState, useEffect } from 'react';
-import { Volume2, VolumeX, Mic, MicOff, Sparkles } from 'lucide-react';
-import { translations } from '../translations';
-import { ttsService } from '../services/ttsService';
+import React from 'react';
+import { Volume2, VolumeX, Mic, MicOff } from 'lucide-react';
+import { useSpeech } from '../context/SpeechContext';
 
-export default function VoiceAssistant({ textToSpeak, language = 'Hindi', onVoiceInput }) {
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [isListening, setIsListening] = useState(false);
-  const t = translations[language] || translations.English;
-
-  useEffect(() => {
-    return () => {
-      ttsService.stop();
-    };
-  }, []);
+export default function VoiceAssistant({ textToSpeak, language, onVoiceInput }) {
+  const { isSpeaking, isListening, speak, stopSpeaking, startListening, stopListening, t, currentLanguage } = useSpeech();
 
   const handleSpeak = () => {
-    if (isPlaying) {
-      ttsService.stop();
-      setIsPlaying(false);
+    if (isSpeaking) {
+      stopSpeaking();
       return;
     }
 
     if (!textToSpeak) return;
 
-    setIsPlaying(true);
-    ttsService.speak(textToSpeak, {
-      language: language,
-      onEnd: () => setIsPlaying(false),
-      onError: () => setIsPlaying(false)
+    speak(textToSpeak, 'voice-assistant-audio', {
+      language: language || currentLanguage
     });
   };
 
   const handleListen = () => {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      alert('Speech recognition is not supported in this browser. Please use Chrome or Edge.');
-      return;
-    }
-
     if (isListening) {
-      setIsListening(false);
+      stopListening();
       return;
     }
 
-    try {
-      const recognition = new SpeechRecognition();
-      const langMap = {
-        'Hindi': 'hi-IN',
-        'Tamil': 'ta-IN',
-        'Telugu': 'te-IN',
-        'Marathi': 'mr-IN',
-        'Bengali': 'bn-IN',
-        'English': 'en-IN'
-      };
-      recognition.lang = langMap[language] || 'en-IN';
-      recognition.continuous = false;
-      recognition.interimResults = false;
-
-      recognition.onstart = () => setIsListening(true);
-      recognition.onend = () => setIsListening(false);
-      recognition.onerror = () => setIsListening(false);
-
-      recognition.onresult = (event) => {
-        const transcript = event.results[0][0].transcript;
-        if (onVoiceInput) {
+    startListening({
+      language: language || currentLanguage,
+      onResult: (transcript, isFinal) => {
+        if (isFinal && onVoiceInput) {
           onVoiceInput(transcript);
         }
-      };
-
-      recognition.start();
-    } catch (err) {
-      console.warn('[Voice Recognition error]', err);
-      setIsListening(false);
-    }
+      }
+    });
   };
 
   return (
@@ -83,13 +42,13 @@ export default function VoiceAssistant({ textToSpeak, language = 'Hindi', onVoic
           type="button"
           onClick={handleSpeak}
           className={`inline-flex items-center space-x-2 px-3 py-1.5 rounded-xl text-xs font-bold transition-all shadow-sm ${
-            isPlaying
+            isSpeaking
               ? 'bg-amber-500 text-white animate-pulse shadow-amber-500/20'
               : 'bg-emerald-50 text-emerald-800 border border-emerald-300 hover:bg-emerald-100'
           }`}
         >
-          {isPlaying ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
-          <span>{isPlaying ? 'Stop Audio' : t.voiceListen}</span>
+          {isSpeaking ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
+          <span>{isSpeaking ? (t('stop_audio') || 'Stop Audio') : (t('voiceListen') || 'Listen Aloud')}</span>
         </button>
       )}
 
@@ -105,7 +64,7 @@ export default function VoiceAssistant({ textToSpeak, language = 'Hindi', onVoic
           }`}
         >
           {isListening ? <MicOff className="w-3.5 h-3.5" /> : <Mic className="w-3.5 h-3.5" />}
-          <span>{isListening ? 'Listening...' : t.voiceMic}</span>
+          <span>{isListening ? 'Listening...' : (t('voiceMic') || 'Voice Input')}</span>
         </button>
       )}
     </div>

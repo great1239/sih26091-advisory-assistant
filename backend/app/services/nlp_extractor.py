@@ -63,6 +63,10 @@ class ExtractedOnboardingParameters(BaseModel):
         default="Beneficiary",
         description="Name of the applicant."
     )
+    ui_translation_language: Optional[str] = Field(
+        default="hi-IN",
+        description="Detected user language dialect code e.g. 'hi-IN', 'ta-IN', 'te-IN', 'bn-IN', 'mr-IN', 'en-US'"
+    )
 
 class ConversationalExtractionResponse(BaseModel):
     is_complete: bool

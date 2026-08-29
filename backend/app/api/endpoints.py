@@ -101,7 +101,8 @@ async def extract_conversational_parameters(request: Request, payload: ChatExtra
                 social_category=p.social_category or "General",
                 land_asset_status=p.land_asset_status or "Owned",
                 years_in_industry=int(p.years_in_industry or 0),
-                specific_skillsets=p.specific_skillsets or []
+                specific_skillsets=p.specific_skillsets or [],
+                ui_translation_language=p.ui_translation_language or "hi-IN"
             )
             assessment = await assess_enterprise(request, onboarding_input)
 
@@ -206,7 +207,8 @@ async def assess_enterprise(request: Request, payload: OnboardingInput):
             pivot_recommendations=pivot_recs,
             moratorium_milestones=nudges,
             dpr_report_available=True,
-            summary_audio_text=audio_text
+            summary_audio_text=audio_text,
+            ui_translation_language=payload.ui_translation_language or "hi-IN"
         )
         
         try:

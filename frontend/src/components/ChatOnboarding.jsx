@@ -27,9 +27,10 @@ import confetti from 'canvas-confetti';
 import VoiceAssistant from './VoiceAssistant';
 import LiveLocationMap from './LiveLocationMap';
 import { offlineStorage } from '../services/offlineStorage';
-import { ttsService } from '../services/ttsService';
+import { useSpeech } from '../context/SpeechContext';
 
 export default function ChatOnboarding({ onAssessmentComplete, language }) {
+  const { speak, stopSpeaking, speakingMessageId, setLanguage, currentLanguage, t } = useSpeech();
   const [messages, setMessages] = useState([
     {
       id: 'welcome',
@@ -58,7 +59,6 @@ export default function ChatOnboarding({ onAssessmentComplete, language }) {
     geographic_location: 'Selected Map Plot'
   });
   const [extractedDisplay, setExtractedDisplay] = useState(null);
-  const [speakingMessageId, setSpeakingMessageId] = useState(null);
 
   const messagesEndRef = useRef(null);
 
@@ -73,7 +73,7 @@ export default function ChatOnboarding({ onAssessmentComplete, language }) {
   // Clean up speech on unmount
   useEffect(() => {
     return () => {
-      ttsService.stop();
+      stopSpeaking();
     };
   }, []);
 
@@ -81,30 +81,20 @@ export default function ChatOnboarding({ onAssessmentComplete, language }) {
     'OBC', 'SC', 'ST', 'Women', 'General', 'PwD / Divyang', 'Safai Karamchari'
   ];
 
-  // Text-To-Speech read aloud in Indic voice
+  // Text-To-Speech read aloud via generic SpeechContext Voice Adapter
   const speakMessage = (msgId, textToSpeak) => {
-    if (speakingMessageId === msgId) {
-      ttsService.stop();
-      setSpeakingMessageId(null);
-      return;
-    }
-
     const cleanText = typeof textToSpeak === 'string'
       ? textToSpeak
       : 'Namaste! I am Vikas Sarthi, your MoSJE AI Business Advisor.';
 
-    setSpeakingMessageId(msgId);
-    ttsService.speak(cleanText, {
-      language: language || 'Hindi',
-      onEnd: () => setSpeakingMessageId(null),
-      onError: () => setSpeakingMessageId(null)
+    speak(cleanText, msgId, {
+      language: currentLanguage
     });
   };
 
   // Reset conversation
   const handleResetChat = () => {
-    ttsService.stop();
-    setSpeakingMessageId(null);
+    stopSpeaking();
     setMessages([
       {
         id: Date.now().toString(),
@@ -171,6 +161,13 @@ export default function ChatOnboarding({ onAssessmentComplete, language }) {
         quickReplies: data.suggested_quick_replies || []
       };
       setMessages((prev) => [...prev, aiMsg]);
+
+      if (data.extracted_parameters?.ui_translation_language) {
+        setLanguage(data.extracted_parameters.ui_translation_language);
+      }
+      if (data.assessment_result?.ui_translation_language) {
+        setLanguage(data.assessment_result.ui_translation_language);
+      }
 
       // If assessment ready, celebrate with confetti & trigger dashboard
       if (data.assessment_result) {
