@@ -1,11 +1,10 @@
-// COST GUARDRAIL: Free tier only
 // High-Precision Real Roadmap Location Component
 // Built with native Leaflet + 100% Free OpenStreetMap & Esri Satellite tiles (Zero API Key / Zero Watermark).
-// 100% fail-safe: Clean lifecycle management with map.remove() on unmount.
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+// Features: Dynamic 5km Bounding Circle, Draggable Center Pin, and Satellite POI Shadow-Scouting Markers.
+import React, { useState, useEffect, useRef } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { Navigation, MapPin, Search, Compass, Layers, AlertCircle } from 'lucide-react';
+import { Navigation, MapPin, Search, Compass, Layers, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import axios from 'axios';
 
 // Fix Leaflet Default Marker Icon Assets
@@ -16,7 +15,7 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
 });
 
-// Custom SVG Pin Icon
+// Custom Center Pin Icon
 const customPinIcon = L.divIcon({
   className: 'custom-map-pin',
   html: `
@@ -54,19 +53,71 @@ const customPinIcon = L.divIcon({
   iconAnchor: [16, 40]
 });
 
-export default function LiveLocationMap({ onLocationSelect, initialCoords }) {
+// Formal MSME POI Icon (Blue)
+const formalPoiIcon = L.divIcon({
+  className: 'formal-map-pin',
+  html: `
+    <div style="position: relative; transform: translate(-50%, -50%);">
+      <div style="
+        width: 22px;
+        height: 22px;
+        background: #2563eb;
+        border: 2px solid #ffffff;
+        border-radius: 50%;
+        box-shadow: 0 2px 8px rgba(37, 99, 235, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #ffffff;
+        font-size: 11px;
+        font-weight: 900;
+      ">🏢</div>
+    </div>
+  `,
+  iconSize: [24, 24],
+  iconAnchor: [12, 12]
+});
+
+// Satellite-Scouted Informal POI Icon (Amber/Orange Glow)
+const informalPoiIcon = L.divIcon({
+  className: 'informal-map-pin',
+  html: `
+    <div style="position: relative; transform: translate(-50%, -50%);">
+      <div style="
+        width: 22px;
+        height: 22px;
+        background: #d97706;
+        border: 2px solid #ffffff;
+        border-radius: 50%;
+        box-shadow: 0 0 10px rgba(245, 158, 11, 0.7);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #ffffff;
+        font-size: 11px;
+        font-weight: 900;
+      ">🛰️</div>
+    </div>
+  `,
+  iconSize: [24, 24],
+  iconAnchor: [12, 12]
+});
+
+export default function LiveLocationMap({ onLocationSelect, initialCoords, competitorPins = [] }) {
   const defaultPos = initialCoords || { lat: 28.6139, lng: 77.2090 };
   const [position, setPosition] = useState(defaultPos);
   const [isLocating, setIsLocating] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [tileProvider, setTileProvider] = useState('osm'); // 'osm' | 'hot' | 'satellite'
+  const [showCompetitorLayers, setShowCompetitorLayers] = useState(true);
 
   const mapContainerRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const markerRef = useRef(null);
   const circleRef = useRef(null);
   const tileLayerRef = useRef(null);
+  const competitorLayerRef = useRef(null);
   const debounceTimerRef = useRef(null);
 
   // 100% Free, Zero-Watermark, Official Public Tile Providers
@@ -92,7 +143,6 @@ export default function LiveLocationMap({ onLocationSelect, initialCoords }) {
   useEffect(() => {
     if (!mapContainerRef.current) return;
 
-    // Destroy existing instance if any
     if (mapInstanceRef.current) {
       mapInstanceRef.current.remove();
       mapInstanceRef.current = null;
@@ -106,10 +156,8 @@ export default function LiveLocationMap({ onLocationSelect, initialCoords }) {
         zoomControl: false
       });
 
-      // Add Zoom control at bottom left
       L.control.zoom({ position: 'bottomleft' }).addTo(map);
 
-      // Tile Layer (OpenStreetMap / Esri - zero watermark)
       const tileLayer = L.tileLayer(tileProviders[tileProvider].url, {
         attribution: tileProviders[tileProvider].attribution,
         maxZoom: 19
@@ -127,7 +175,7 @@ export default function LiveLocationMap({ onLocationSelect, initialCoords }) {
       }).addTo(map);
       circleRef.current = circle;
 
-      // Draggable Marker
+      // Center Pin Marker
       const marker = L.marker([position.lat, position.lng], {
         icon: customPinIcon,
         draggable: true
@@ -143,7 +191,6 @@ export default function LiveLocationMap({ onLocationSelect, initialCoords }) {
         handlePositionChange(newPos, false);
       });
 
-      // Click on Map to Reposition Pin
       map.on('click', (e) => {
         const newPos = {
           lat: parseFloat(e.latlng.lat.toFixed(5)),
@@ -151,6 +198,10 @@ export default function LiveLocationMap({ onLocationSelect, initialCoords }) {
         };
         handlePositionChange(newPos, true);
       });
+
+      // LayerGroup for Competitor Pins
+      const compLayer = L.layerGroup().addTo(map);
+      competitorLayerRef.current = compLayer;
 
       mapInstanceRef.current = map;
     } catch (err) {
@@ -172,6 +223,36 @@ export default function LiveLocationMap({ onLocationSelect, initialCoords }) {
       tileLayerRef.current.setUrl(tileProviders[tileProvider].url);
     } catch (e) {}
   }, [tileProvider]);
+
+  // Update Competitor Markers on Map
+  useEffect(() => {
+    if (!mapInstanceRef.current || !competitorLayerRef.current) return;
+    competitorLayerRef.current.clearLayers();
+
+    if (!showCompetitorLayers || !competitorPins || competitorPins.length === 0) return;
+
+    competitorPins.forEach((pin) => {
+      if (!pin.lat || !pin.lng) return;
+      const isFormal = pin.type === 'formal_udyam';
+      const marker = L.marker([pin.lat, pin.lng], {
+        icon: isFormal ? formalPoiIcon : informalPoiIcon
+      });
+
+      const popupContent = `
+        <div style="font-family: sans-serif; font-size: 11px; padding: 4px; line-height: 1.4;">
+          <div style="font-weight: 800; color: ${isFormal ? '#1d4ed8' : '#b45309'}; margin-bottom: 2px;">
+            ${isFormal ? '🏢 MSME Udyam Enterprise' : '🛰️ Satellite-Scouted Informal Stall'}
+          </div>
+          <div style="color: #1e293b; font-weight: 700;">${pin.name}</div>
+          <div style="color: #64748b; font-size: 10px; margin-top: 2px;">Distance: ${pin.distance_km} km from Center</div>
+          <div style="color: #059669; font-size: 9px; margin-top: 2px;">${pin.status || ''}</div>
+        </div>
+      `;
+
+      marker.bindPopup(popupContent);
+      competitorLayerRef.current.addLayer(marker);
+    });
+  }, [competitorPins, showCompetitorLayers]);
 
   const handlePositionChange = (newPos, shouldFly = true) => {
     if (!newPos || isNaN(newPos.lat) || isNaN(newPos.lng)) return;
@@ -252,6 +333,8 @@ export default function LiveLocationMap({ onLocationSelect, initialCoords }) {
       onLocationSelect({
         latitude: newPos.lat,
         longitude: newPos.lng,
+        lat: newPos.lat,
+        lng: newPos.lng,
         geographic_location: result.display_name
       });
     }
@@ -276,6 +359,8 @@ export default function LiveLocationMap({ onLocationSelect, initialCoords }) {
           onLocationSelect({
             latitude: newPos.lat,
             longitude: newPos.lng,
+            lat: newPos.lat,
+            lng: newPos.lng,
             geographic_location: `User Real GPS Plot (${newPos.lat.toFixed(4)}, ${newPos.lng.toFixed(4)})`
           });
         }
@@ -294,104 +379,119 @@ export default function LiveLocationMap({ onLocationSelect, initialCoords }) {
       {/* Top Search & Controls Bar */}
       <div className="flex items-center gap-2">
         <div className="relative flex-1">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+            <Search className="w-4 h-4" />
+          </div>
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => handleSearch(e.target.value)}
-            placeholder="Search village, tehsil, mandi, or district (OpenStreetMap Geocoder)..."
-            className="w-full pl-9 pr-4 py-2.5 rounded-2xl bg-white border border-slate-300 text-xs font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-xs transition-all placeholder:text-slate-400"
+            placeholder="Search village, tehsil, city or landmark across India..."
+            className="w-full pl-9 pr-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
           />
-          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
 
-          {/* Autocomplete Suggestions Dropdown */}
+          {/* Autocomplete Dropdown */}
           {searchResults.length > 0 && (
-            <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-2xl shadow-xl border border-slate-200 z-[1050] overflow-hidden divide-y divide-slate-100">
+            <div className="absolute top-full mt-1 left-0 right-0 bg-white border border-slate-200 rounded-xl shadow-xl z-50 overflow-hidden divide-y divide-slate-100 max-h-56 overflow-y-auto">
               {searchResults.map((item, idx) => (
                 <button
                   key={idx}
                   type="button"
                   onClick={() => handleSelectSearchResult(item)}
-                  className="w-full text-left px-3.5 py-2 text-xs hover:bg-blue-50 text-slate-700 flex items-start space-x-2 transition-all"
+                  className="w-full text-left px-3 py-2 text-xs hover:bg-blue-50 flex items-start space-x-2 transition-colors"
                 >
-                  <MapPin className="w-3.5 h-3.5 text-blue-600 flex-shrink-0 mt-0.5" />
-                  <span className="line-clamp-1">{item.display_name}</span>
+                  <MapPin className="w-3.5 h-3.5 text-blue-500 mt-0.5 shrink-0" />
+                  <span className="text-slate-700 truncate">{item.display_name}</span>
                 </button>
               ))}
             </div>
           )}
         </div>
-      </div>
 
-      {/* Map Viewport Container */}
-      <div className="relative w-full h-[520px] rounded-3xl overflow-hidden border border-slate-200 shadow-md bg-slate-100">
-        
-        {/* Floating Top Bar (GPS & Layer Switcher) */}
-        <div className="absolute top-4 left-4 right-4 z-[1000] flex items-center justify-between pointer-events-none">
+        {/* GPS Live Geolocation Button */}
+        <button
+          type="button"
+          onClick={handleGetGPSLocation}
+          disabled={isLocating}
+          title="Detect Current Location"
+          className="px-3 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold flex items-center space-x-1.5 shadow-sm transition-all shrink-0"
+        >
+          <Navigation className={`w-3.5 h-3.5 ${isLocating ? 'animate-spin' : ''}`} />
+          <span className="hidden sm:inline">{isLocating ? 'Locating...' : 'My GPS'}</span>
+        </button>
+
+        {/* Tile Provider Switcher */}
+        <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-200 shrink-0">
           <button
             type="button"
-            onClick={handleGetGPSLocation}
-            disabled={isLocating}
-            className="pointer-events-auto px-4 py-2 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs uppercase tracking-wider shadow-lg shadow-emerald-950/20 flex items-center gap-2 transition-all transform active:scale-95 border border-emerald-400/40 disabled:opacity-50"
+            onClick={() => setTileProvider('osm')}
+            className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all ${
+              tileProvider === 'osm'
+                ? 'bg-white text-blue-700 shadow-xs'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
           >
-            <Navigation className={`w-3.5 h-3.5 ${isLocating ? 'animate-spin' : ''}`} />
-            <span>{isLocating ? 'Acquiring GPS...' : 'Use My Current GPS'}</span>
+            Street
           </button>
-
-          {/* Tile Layer Switcher: 100% Free & Zero Watermark */}
-          <div className="pointer-events-auto flex items-center gap-1 bg-white/95 backdrop-blur-md p-1 rounded-2xl border border-slate-200 shadow-md">
-            <button
-              type="button"
-              onClick={() => setTileProvider('osm')}
-              className={`px-2.5 py-1 rounded-xl text-[10px] font-bold transition-all ${
-                tileProvider === 'osm' ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100'
-              }`}
-            >
-              Roadmap
-            </button>
-            <button
-              type="button"
-              onClick={() => setTileProvider('hot')}
-              className={`px-2.5 py-1 rounded-xl text-[10px] font-bold transition-all ${
-                tileProvider === 'hot' ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100'
-              }`}
-            >
-              High Contrast
-            </button>
-            <button
-              type="button"
-              onClick={() => setTileProvider('satellite')}
-              className={`px-2.5 py-1 rounded-xl text-[10px] font-bold transition-all ${
-                tileProvider === 'satellite' ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100'
-              }`}
-            >
-              Satellite
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={() => setTileProvider('satellite')}
+            className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all ${
+              tileProvider === 'satellite'
+                ? 'bg-white text-blue-700 shadow-xs'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            Satellite
+          </button>
         </div>
 
-        {/* Real Leaflet Map DOM Container */}
-        <div ref={mapContainerRef} className="w-full h-full" />
+        {/* Competitor Layer Toggle */}
+        {competitorPins && competitorPins.length > 0 && (
+          <button
+            type="button"
+            onClick={() => setShowCompetitorLayers(!showCompetitorLayers)}
+            className={`px-2.5 py-2 rounded-xl text-xs font-bold flex items-center space-x-1 border transition-all ${
+              showCompetitorLayers
+                ? 'bg-amber-50 text-amber-800 border-amber-300'
+                : 'bg-slate-100 text-slate-600 border-slate-200'
+            }`}
+            title="Toggle Competitor POI Markers"
+          >
+            {showCompetitorLayers ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+            <span className="hidden md:inline">POIs</span>
+          </button>
+        )}
+      </div>
 
-        {/* Floating 5km Radius Badge */}
-        <div className="absolute top-16 right-4 z-[1000] bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-2xl text-[11px] font-black text-blue-900 border border-slate-200 shadow-md flex items-center gap-1.5 pointer-events-none">
-          <span className="w-2 h-2 rounded-full bg-blue-600 animate-ping" />
-          <span>5.0 km Catchment Bounding</span>
-        </div>
+      {/* Map Canvas Container */}
+      <div className="relative rounded-2xl overflow-hidden border border-slate-200/90 shadow-sm bg-slate-100 h-[440px]">
+        <div ref={mapContainerRef} className="w-full h-full z-0" />
 
-        {/* Footer Coordinate Readout */}
-        <div className="absolute bottom-4 right-4 z-[1000] bg-white/95 backdrop-blur-md px-3.5 py-2 rounded-2xl text-xs font-mono text-slate-900 border border-slate-200 shadow-md flex items-center gap-2 pointer-events-none">
-          <MapPin className="w-4 h-4 text-rose-600" />
+        {/* Live Coordinate Overlay Badge */}
+        <div className="absolute bottom-3 right-3 bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-xl border border-slate-200/80 shadow-md flex items-center space-x-2 pointer-events-none z-10 text-[11px] font-bold text-slate-700">
+          <MapPin className="w-3.5 h-3.5 text-rose-500 animate-pulse" />
           <span>
-            Lat: <b className="text-emerald-700">{position.lat.toFixed(5)}</b>, Lng: <b className="text-emerald-700">{position.lng.toFixed(5)}</b>
+            Pin: {position.lat.toFixed(4)}, {position.lng.toFixed(4)} • 5km Bounding
           </span>
         </div>
 
-        {/* Click Instruction Banner at Bottom Left */}
-        <div className="absolute bottom-4 left-4 z-[1000] bg-slate-900/80 backdrop-blur-md text-white px-3 py-1.5 rounded-2xl text-[10px] font-medium border border-slate-700 shadow-md flex items-center gap-1.5 pointer-events-none">
-          <Compass className="w-3.5 h-3.5 text-emerald-400 animate-spin [animation-duration:10s]" />
-          <span>Click anywhere to drop pin</span>
-        </div>
-
+        {/* Competitor Legend Overlay when POIs active */}
+        {competitorPins && competitorPins.length > 0 && showCompetitorLayers && (
+          <div className="absolute top-3 right-3 bg-white/95 backdrop-blur-md px-3 py-2 rounded-xl border border-slate-200 shadow-md z-10 text-[10px] space-y-1">
+            <div className="font-extrabold text-slate-800 flex items-center space-x-1">
+              <span>🛰️ Spatial POI Scout</span>
+            </div>
+            <div className="flex items-center space-x-1.5 text-blue-700 font-bold">
+              <span className="w-2 h-2 rounded-full bg-blue-600"></span>
+              <span>Formal Udyam POIs</span>
+            </div>
+            <div className="flex items-center space-x-1.5 text-amber-700 font-bold">
+              <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+              <span>Satellite-Scouted Informal</span>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -44,6 +44,14 @@ class VoidAnalysisResult(BaseModel):
     monthly_upi_tx_velocity: int
     commercial_power_load_kw: float
     raw_insights: List[str]
+    satellite_scouted_informal_nodes: Optional[int] = Field(default=0)
+    satellite_radiance_index: Optional[float] = Field(default=14.2)
+    shrug_village_id: Optional[str] = Field(default="shrid-11-24-001942")
+    shrug_village_name: Optional[str] = Field(default="Rural Gram Cluster")
+    pmgsy_road_quality: Optional[str] = Field(default="All-Weather Paved Road")
+    feeder_power_outage_hrs_day: Optional[float] = Field(default=2.4)
+    solar_backup_recommended: Optional[bool] = Field(default=False)
+    scouted_competitor_pins: Optional[List[Dict[str, Any]]] = Field(default=[])
 
 class RiskAssessmentResult(BaseModel):
     overall_risk_score: float = Field(default=35.0)

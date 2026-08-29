@@ -244,6 +244,7 @@ export default function AppDashboard({ language }) {
                 <LiveLocationMap
                   onLocationSelect={handleLocationSelect}
                   initialCoords={selectedCoords}
+                  competitorPins={voidData?.scouted_competitor_pins || []}
                 />
               </div>
             </motion.div>
@@ -312,7 +313,78 @@ export default function AppDashboard({ language }) {
                 </div>
               </div>
 
-              {/* 2. 5km Market Void Bar Chart */}
+              {/* 2. Satellite & Spatial POI Shadow-Scout Card */}
+              {voidData && (
+                <div className="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <span className="p-1.5 rounded-lg bg-indigo-100 text-indigo-700">
+                        <Layers className="w-4 h-4" />
+                      </span>
+                      <div>
+                        <span className="text-[10px] font-black uppercase tracking-wider text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200">
+                          Satellite Shadow-Scouting & SHRUG Precision
+                        </span>
+                        <h3 className="text-sm font-black text-slate-900 mt-0.5">
+                          Unregistered Competition & Village Infrastructure
+                        </h3>
+                      </div>
+                    </div>
+
+                    <span className="text-xs font-black text-indigo-900 bg-indigo-50 px-2.5 py-1 rounded-xl border border-indigo-200">
+                      VIIRS {voidData?.satellite_radiance_index || 14.2} nW/cm²/sr
+                    </span>
+                  </div>
+
+                  {/* Satellite Competition Split Tiles */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                    {/* Tile A: Formal MSME Udyam */}
+                    <div className="p-3 rounded-2xl bg-blue-50/60 border border-blue-200/80 space-y-1">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-black uppercase text-blue-700 flex items-center space-x-1">
+                          <span>🏢 Formal MSME Registry</span>
+                        </span>
+                        <span className="text-base font-black text-blue-900">{voidData?.formal_udyam_poi_count || 0} POIs</span>
+                      </div>
+                      <p className="text-[10px] text-blue-800">
+                        Formally licensed storefronts registered under MSME Udyam.
+                      </p>
+                    </div>
+
+                    {/* Tile B: Satellite-Scouted Informal Shadow */}
+                    <div className="p-3 rounded-2xl bg-amber-50/70 border border-amber-300 space-y-1">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-black uppercase text-amber-800 flex items-center space-x-1">
+                          <span>🛰️ Satellite-Scouted Shadow</span>
+                        </span>
+                        <span className="text-base font-black text-amber-900">
+                          {voidData?.satellite_scouted_informal_nodes || voidData?.informal_merchant_nodes || 0} Nodes
+                        </span>
+                      </div>
+                      <p className="text-[10px] text-amber-900 font-medium">
+                        Unregistered thelas, weekly haats & night stalls detected via VIIRS Luminescence & OSM Junction clusters.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Hyperlocal SHRUG & 11kV Feeder Badges */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 text-xs">
+                    <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200/80 flex items-center justify-between">
+                      <span className="text-[10px] font-bold text-slate-500">🏡 Village SHRID:</span>
+                      <span className="font-mono text-[11px] font-bold text-slate-800">{voidData?.shrug_village_id || 'shrid-11-24-001942'}</span>
+                    </div>
+
+                    <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200/80 flex items-center justify-between">
+                      <span className="text-[10px] font-bold text-slate-500">⚡ 11kV Feeder Outage:</span>
+                      <span className="font-bold text-[11px] text-slate-800">
+                        {voidData?.feeder_power_outage_hrs_day || 2.4} hrs/day ({voidData?.solar_backup_recommended ? 'Solar Buffer' : 'Grid Stable'})
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* 3. 5km Market Void Bar Chart */}
               {voidData && (
                 <div className="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm space-y-4">
                   <div className="flex items-center justify-between">
@@ -347,12 +419,12 @@ export default function AppDashboard({ language }) {
 
                   <div className="grid grid-cols-3 gap-2 pt-2 border-t border-slate-100 text-xs">
                     <div className="bg-slate-50 p-2 rounded-xl border border-slate-200/60 text-center">
-                      <span className="text-[9px] text-slate-400 font-bold block uppercase">Formal Udyam</span>
-                      <span className="font-extrabold text-slate-800">{voidData?.formal_udyam_poi_count || 0} Units</span>
+                      <span className="text-[9px] text-slate-400 font-bold block uppercase">Formal MSMEs</span>
+                      <span className="font-extrabold text-blue-700">{voidData?.formal_udyam_poi_count || 0} Units</span>
                     </div>
                     <div className="bg-slate-50 p-2 rounded-xl border border-slate-200/60 text-center">
-                      <span className="text-[9px] text-slate-400 font-bold block uppercase">Informal Nodes</span>
-                      <span className="font-extrabold text-slate-800">{voidData?.informal_merchant_nodes || 0} Nodes</span>
+                      <span className="text-[9px] text-slate-400 font-bold block uppercase">Scouted Informal</span>
+                      <span className="font-extrabold text-amber-700">{voidData?.satellite_scouted_informal_nodes || voidData?.informal_merchant_nodes || 0} Nodes</span>
                     </div>
                     <div className="bg-slate-50 p-2 rounded-xl border border-slate-200/60 text-center">
                       <span className="text-[9px] text-slate-400 font-bold block uppercase">Competitor Density</span>
